@@ -1,0 +1,70 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: codedx-transaction-generator
+
+  datasource:
+    url: jdbc:h2:file:./data/transactiondb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: http://localhost:8081
+        auto.register.schemas: true
+        use.latest.version: true
+        # Producer optimizations
+        acks: all
+        retries: 10
+        retry.backoff.ms: 1000
+        batch.size: 16384
+        linger.ms: 20
+        compression.type: snappy
+
+  # Completely disable Redis auto-configuration
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+# Custom Configuration
+app:
+  kafka:
+    topics:
+      transactions: "financial-transactions"
+      fraud-alerts: "fraud-alerts"
+  data:
+    generation:
+      enabled: true
+      initial-customers: 50
+      initial-cards-per-cards-per-customer: 2
+      transaction-interval-ms: 10000
+  redis:
+    enabled: false
+
+logging:
+  level:
+    com.codedstream.transfraud: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.kafka: INFO
